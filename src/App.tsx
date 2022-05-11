@@ -52,15 +52,18 @@ function App() {
      * @returns {Promise<void>}
      */
     const connectWalletInjectd = async () => {
-        setErrorMessage('')
-        const provider = updateEthers(ethereum);
-        // debugger
-        await provider.send('eth_requestAccounts', []).then(accounts => {
-            if (accounts.length > 0) {
-                accountChangedHandler(accounts[0]);
-                saveProviderStore('injected');
-            }
-        }).catch(error => setErrorMessage(error.message))
+        if (ethereum) {
+            const provider = updateEthers(ethereum);
+            // debugger
+            await provider.send('eth_requestAccounts', []).then(accounts => {
+                if (accounts.length > 0) {
+                    accountChangedHandler(accounts[0]);
+                    saveProviderStore('injected');
+                }
+            }).catch(error => showErrorMessage(error.message));
+        } else {
+            showErrorMessage('No provider exists')
+        }
     }
 
     /**
@@ -72,15 +75,17 @@ function App() {
         const provider = new WalletConnectProvider({
             infuraId: "5194fde9bf364940a1bbaffd59534e78",
         });
+        debugger
         await provider.enable();
         updateEthers(provider);
         if (provider.connected) {
+            saveProviderStore('walletconnect');
             accountChangedHandler(provider.accounts[0]);
         }
     }
 
     web3Provider?.provider?.on("accountsChanged", (accounts: string[]) => {
-        disconnect();
+        // disconnect();
     });
     // Subscribe to chainId change
     web3Provider?.provider?.on("chainChanged", (chainId: number) => {
@@ -89,7 +94,7 @@ function App() {
     // Subscribe to session disconnection
     web3Provider?.provider?.on("disconnect", (code: number, reason: string) => {
         console.log(code, reason);
-        disconnect();
+        // disconnect();
     });
 
     /**
@@ -112,15 +117,27 @@ function App() {
 
     useEffect(() => {
         //check login, injected or walletconnect
+        const provider = window.localStorage.getItem('provider');
+        if (provider) {
+            handleWhenInit(provider);
+        }
+
         getInfoStaticInjected();
     }, [defaultAccount]);
+
+    const handleWhenInit = async (provider: string | null) => {
+        if (provider === 'walletconnect') {
+            connectWalletConnectedConnector();
+        }
+        if (provider === 'injected') {
+            connectWalletInjectd();
+        }
+    }
 
     const getInfoStaticInjected = async () => {
         if (defaultAccount && ethers.utils.isAddress(defaultAccount)) {
             await getBalance();
             await fetchDataAll();
-        } else {
-            disconnect();
         }
     }
 
@@ -134,8 +151,8 @@ function App() {
     }
 
     // listen for account changes
-    ethereum.on('accountsChanged', accountChangedHandler);
-    ethereum.on('chainChanged', chainChangedHandler);
+    ethereum?.on('accountsChanged', accountChangedHandler);
+    ethereum?.on('chainChanged', chainChangedHandler);
 
 //     // Subscribe to accounts change
 //     connector?.on("accountsChanged", (accounts: string) => {
@@ -175,7 +192,6 @@ function App() {
     }
 
     const resetForm = () => {
-        setErrorMessage('');
         setValueDeposit('');
         setValueWithdraw('');
         setStateDeposit(false);
@@ -236,14 +252,13 @@ function App() {
 
     const approveWethToMaster = async () => {
         if (balance) {
-            setErrorMessage('');
             setOpenLoading(true);
             const valueConvert = ethers.utils.parseEther(balance);
             await scWeth.approve(SC_MASTERCHEF, valueConvert).then(async (txn: any) => {
                 await txn?.wait();
                 setStateApprove(true);
             }).catch((e: any) => {
-                setErrorMessage(e.message);
+                showErrorMessage(e.message);
             });
             setOpenLoading(false);
         }
@@ -257,24 +272,31 @@ function App() {
             if (txn) {
                 await txn?.wait();
                 getInfoStaticInjected();
-                resetForm();
             }
+            resetForm();
             setStateLoading(false);
         }
     }
 
     const handleDeposit = async (value: BigNumber) => {
         return await scMasterchef.deposit(value).catch((e: any) => {
-            setErrorMessage(e.message);
+            showErrorMessage(e.message);
             setStateDeposit(false);
         });
     }
 
     const handleWithdraw = async (value: BigNumber) => {
         return await scMasterchef.withdraw(value).catch((e: any) => {
-            setErrorMessage(e.message);
+            showErrorMessage(e.message);
             setStateWithdraw(false);
         });
+    }
+
+    const showErrorMessage = (message: string) => {
+        setErrorMessage(message);
+        setTimeout(() => {
+            setErrorMessage('');
+        }, 5000);
     }
 
     const withdrawMasterchef = async () => {
@@ -284,8 +306,8 @@ function App() {
         if (txn) {
             await txn?.wait();
             getInfoStaticInjected();
-            resetForm();
         }
+        resetForm();
         setStateLoading(false);
     }
 

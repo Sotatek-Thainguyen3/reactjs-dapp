@@ -75,7 +75,6 @@ function App() {
         const provider = new WalletConnectProvider({
             infuraId: "5194fde9bf364940a1bbaffd59534e78",
         });
-        debugger
         await provider.enable();
         updateEthers(provider);
         if (provider.connected) {
@@ -85,16 +84,15 @@ function App() {
     }
 
     web3Provider?.provider?.on("accountsChanged", (accounts: string[]) => {
-        // disconnect();
+        disconnect();
     });
     // Subscribe to chainId change
     web3Provider?.provider?.on("chainChanged", (chainId: number) => {
-        console.log(chainId);
+        disconnect();
     });
     // Subscribe to session disconnection
     web3Provider?.provider?.on("disconnect", (code: number, reason: string) => {
-        console.log(code, reason);
-        // disconnect();
+        disconnect();
     });
 
     /**

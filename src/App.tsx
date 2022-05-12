@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
+import Tooltip from '@mui/material/Tooltip';
 
 import './App.scss';
 import {BigNumber, ethers} from "ethers";
@@ -118,7 +119,6 @@ function App() {
      * This function only clear data in browser, however it connects with wallet
      */
     const disconnect = async () => {
-        console.log('abc')
         window.localStorage.clear();
         setDefaultAccount('');
 
@@ -201,18 +201,25 @@ function App() {
     }
 
     const fetchDataAll = async () => {
+        setOpenLoading(true);
         const etherMultiCall = new Multicall({ethersProvider: web3Provider, tryAggregate: true});
-
         const contractCallContext = [
             {
                 reference: ContractNameMap.SC_WETH,
                 contractAddress: SC_WETH,
                 abi: ERC20_ABI,
-                calls: [{
-                    reference: 'balance',
-                    methodName: 'balanceOf',
-                    methodParameters: [SC_MASTERCHEF]
-                }]
+                calls: [
+                    {
+                        reference: 'balance',
+                        methodName: 'balanceOf',
+                        methodParameters: [SC_MASTERCHEF]
+                    },
+                    {
+                        reference: 'balApproved',
+                        methodName: 'allowance',
+                        methodParameters: [defaultAccount, SC_MASTERCHEF]
+                    },
+                ]
             },
             {
                 reference: ContractNameMap.SC_MASTERCHEF,
@@ -244,11 +251,21 @@ function App() {
             }
 
         }).finally(() => {
-            console.log(resultObj)
+            console.log(resultObj);
+            setStateApprove(stateBalApproved(ethers.utils.formatEther(resultObj[ContractNameMap.SC_WETH].balApproved)));
             setTotalStake(ethers.utils.formatEther(resultObj[ContractNameMap.SC_WETH].balance));
             setYourStakeBal(ethers.utils.formatEther(resultObj[ContractNameMap.SC_MASTERCHEF].balance));
             setTokenEarned(ethers.utils.formatEther(resultObj[ContractNameMap.SC_MASTERCHEF].tokenEarned));
+            setOpenLoading(false);
         });
+
+    }
+
+    const stateBalApproved = (balance: string): boolean => {
+        if (balance && !Number.isNaN(balance)) {
+            return Number(balance) > 0;
+        }
+        return false;
 
     }
 
@@ -347,8 +364,11 @@ function App() {
                     <>
                         <div className="info-account">
                             <div className="wallet-info">
-                                <h3 style={{marginBottom: 0}}>My wallet: {defaultAccount}</h3>
-                                <h3>Balance: {balance ? `${balance} WETH` : ''}</h3>
+                                <Tooltip title={defaultAccount} placement="top" arrow>
+                                    <h3 style={{marginBottom: 0}} className="wallet-info__account">My
+                                        wallet: {defaultAccount}</h3>
+                                </Tooltip>
+                                <h3>Balance: {balance ? `${balance} ETH` : ''}</h3>
                             </div>
 
                             <div className="harvest-info">
@@ -432,7 +452,8 @@ function App() {
                             <input type="number" placeholder="input amount" value={valueWithdraw}
                                    disabled={isLoading}
                                    onChange={(event) => setValueWithdraw(event.target.value)}/> <br/>
-                            <label>Your WETH balance: {balance ? `${balance} WETH` : ''}</label>
+                            <label style={{textAlign: 'center', lineHeight: 2}}>Your WETH
+                                deposited: {yourStakeBal ? `${yourStakeBal} WETH` : ''}</label>
                             <Button variant="contained" className="form-button" onClick={withdrawMasterchef}
                                     disabled={isLoading}>{isLoading ? 'loading...' : 'Withdraw'}</Button>
                         </div>

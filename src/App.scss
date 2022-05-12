@@ -64,7 +64,7 @@
   gap: 2rem;
 
   &-button {
-    margin-top: 2rem
+    margin-top: 1rem
   }
 }
 
@@ -119,6 +119,13 @@ input {
     gap: 1rem;
   }
 
+  .wallet-info__account {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 13rem;
+  }
+
   .form-approve {
     display: flex;
     flex-direction: row;
@@ -146,20 +153,20 @@ input {
   }
 }
 
-@media (min-width: 768px) {
-  .app-container {
-    max-width: 720px;
-  }
-}
-
-@media (min-width: 992px) {
-  .app-container {
-    max-width: 960px;
-  }
-}
+//@media (min-width: 768px) {
+//  .app-container {
+//    max-width: 720px;
+//  }
+//}
+//
+//@media (min-width: 992px) {
+//  .app-container {
+//    max-width: 960px;
+//  }
+//}
 
 @media (min-width: 1200px) {
   .app-container {
-    max-width: 1140px;
+    max-width: 720px;
   }
 }

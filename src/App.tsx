@@ -83,15 +83,34 @@ function App() {
         }
     }
 
+    const chainChangedHandler = () => {
+        // reload the page to avoid any errors with chain change mid use of application
+        window.location.reload();
+    }
+    const accountChangedHandler = (newAccount: any) => {
+        setDefaultAccount(newAccount);
+    }
+
+
+    // listen for account changes
+    ethereum?.on('accountsChanged', accountChangedHandler);
+    ethereum?.on('chainChanged', chainChangedHandler);
+
+    /**
+     * When disconnect, this function to be trigger
+     */
     web3Provider?.provider?.on("accountsChanged", (accounts: string[]) => {
+        console.log('account changed');
         disconnect();
     });
     // Subscribe to chainId change
     web3Provider?.provider?.on("chainChanged", (chainId: number) => {
+        console.log('chainChanged');
         disconnect();
     });
     // Subscribe to session disconnection
     web3Provider?.provider?.on("disconnect", (code: number, reason: string) => {
+        console.log('disconnect');
         disconnect();
     });
 
@@ -99,6 +118,7 @@ function App() {
      * This function only clear data in browser, however it connects with wallet
      */
     const disconnect = async () => {
+        console.log('abc')
         window.localStorage.clear();
         setDefaultAccount('');
 
@@ -114,16 +134,13 @@ function App() {
     }
 
     useEffect(() => {
-        //check login, injected or walletconnect
-        const provider = window.localStorage.getItem('provider');
-        if (provider) {
-            handleWhenInit(provider);
-        }
-
+        handleConnectWhenInit();
         getInfoStaticInjected();
     }, [defaultAccount]);
 
-    const handleWhenInit = async (provider: string | null) => {
+    const handleConnectWhenInit = async () => {
+        //check login, injected or walletconnect
+        const provider = window.localStorage.getItem('provider');
         if (provider === 'walletconnect') {
             connectWalletConnectedConnector();
         }
@@ -138,19 +155,6 @@ function App() {
             await fetchDataAll();
         }
     }
-
-    const chainChangedHandler = () => {
-        // reload the page to avoid any errors with chain change mid use of application
-        window.location.reload();
-    }
-
-    const accountChangedHandler = (newAccount: any) => {
-        setDefaultAccount(newAccount);
-    }
-
-    // listen for account changes
-    ethereum?.on('accountsChanged', accountChangedHandler);
-    ethereum?.on('chainChanged', chainChangedHandler);
 
 //     // Subscribe to accounts change
 //     connector?.on("accountsChanged", (accounts: string) => {

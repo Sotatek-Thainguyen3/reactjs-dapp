@@ -5,6 +5,7 @@ import Modal from '@mui/material/Modal';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
+import LoadingButton from '@mui/lab/LoadingButton';
 
 import './App.scss';
 import {BigNumber, ethers} from "ethers";
@@ -429,8 +430,14 @@ function App() {
                                    disabled={isLoading}
                                    onChange={(event) => setValueDeposit(event.target.value)}/> <br/>
                             <label>Your WETH balance: {balance ? `${balance} WETH` : ''}</label>
-                            <Button variant="contained" className="form-button" onClick={depositToMasterchef}
-                                    disabled={isLoading}>{isLoading ? 'loading...' : 'Deposit'}</Button>
+                            <LoadingButton
+                                onClick={depositToMasterchef}
+                                loading={isLoading}
+                                variant="contained"
+                                disabled={isLoading || !valueDeposit}
+                                className="form-button">
+                                Deposit
+                            </LoadingButton>
                         </div>
                     </Box>
                 </Modal>
@@ -454,8 +461,14 @@ function App() {
                                    onChange={(event) => setValueWithdraw(event.target.value)}/> <br/>
                             <label style={{textAlign: 'center', lineHeight: 2}}>Your WETH
                                 deposited: {yourStakeBal ? `${yourStakeBal} WETH` : ''}</label>
-                            <Button variant="contained" className="form-button" onClick={withdrawMasterchef}
-                                    disabled={isLoading}>{isLoading ? 'loading...' : 'Withdraw'}</Button>
+                            <LoadingButton
+                                onClick={withdrawMasterchef}
+                                loading={isLoading}
+                                variant="contained"
+                                disabled={isLoading || !valueWithdraw}
+                                className="form-button">
+                                Withdraw
+                            </LoadingButton>
                         </div>
                     </Box>
                 </Modal>
